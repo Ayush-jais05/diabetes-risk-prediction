@@ -39,13 +39,16 @@ dpf = st.sidebar.number_input("Diabetes Pedigree Function", 0.0, 3.0, 0.5)
 age = st.sidebar.number_input("Age", 1, 120, 30)
 
 # -----------------------------
-# Prediction
+# Prediction Settings
 # -----------------------------
-THRESHOLD = 0.5
+THRESHOLD = 0.3  # tuned threshold
 
+# -----------------------------
+# Predict Button
+# -----------------------------
 if st.button("🔍 Predict"):
 
-    # Use DataFrame (fixes sklearn warning)
+    # Convert to DataFrame (fix warning)
     input_df = pd.DataFrame({
         "Pregnancies": [pregnancies],
         "Glucose": [glucose],
@@ -57,45 +60,68 @@ if st.button("🔍 Predict"):
         "Age": [age]
     })
 
+    # Prediction probability
     prob = pipeline.predict_proba(input_df)[0][1]
+    pred = 1 if prob > THRESHOLD else 0
 
     # -----------------------------
-    # Risk Levels (Improved Logic)
+    # Risk Levels
     # -----------------------------
     if prob < 0.3:
         risk = "Low"
-        st.success("✅ Low Risk - Maintain a healthy lifestyle")
+        color = "green"
+        message = "✅ Low Risk - Maintain a healthy lifestyle"
     elif prob < 0.7:
         risk = "Moderate"
-        st.warning("⚠️ Moderate Risk - Monitor health, improve diet & exercise")
+        color = "orange"
+        message = "⚠️ Moderate Risk - Monitor health & improve lifestyle"
     else:
         risk = "High"
-        st.error("🚨 High Risk - Please consult a healthcare professional")
+        color = "red"
+        message = "🚨 High Risk - Please consult a doctor"
 
     # -----------------------------
     # Output Section
     # -----------------------------
     st.subheader("🧾 Prediction Result")
 
-    st.markdown(f"### Risk Level: **{risk}**")
-    st.markdown(f"### Probability of Diabetes: **{prob*100:.2f}%**")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.metric("Risk Level", risk)
+
+    with col2:
+        st.metric("Probability", f"{prob*100:.2f}%")
 
     # Progress Bar
     st.progress(float(prob))
 
+    # Message
+    if risk == "High":
+        st.error(message)
+    elif risk == "Moderate":
+        st.warning(message)
+    else:
+        st.success(message)
+
     # -----------------------------
-    # Input Summary (NEW 🔥)
+    # Input Summary
     # -----------------------------
     st.markdown("### 📋 Your Input Summary")
-    st.dataframe(input_df)
+    st.dataframe(input_df, use_container_width=True)
+
+    # -----------------------------
+    # Model Info (NEW 🔥)
+    # -----------------------------
+    st.info("Model: Logistic Regression | Threshold: 0.3 | Class Imbalance Handling Applied")
 
 # -----------------------------
-# Disclaimer (VERY IMPORTANT)
+# Disclaimer
 # -----------------------------
 st.markdown("---")
-st.info("⚠️ This is a machine learning prediction tool and not a medical diagnosis. Always consult a qualified healthcare professional.")
+st.warning("⚠️ This is NOT a medical diagnosis. Please consult a healthcare professional.")
 
 # -----------------------------
 # Footer
 # -----------------------------
-st.caption("⚡ Built with Machine Learning (Logistic Regression + Pipeline + Threshold Tuning)")
+st.caption("🚀 Built by Ayush Raj | Machine Learning Project | Streamlit Deployment")
