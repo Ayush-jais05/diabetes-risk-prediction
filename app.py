@@ -1,5 +1,6 @@
 import streamlit as st
 import numpy as np
+import pandas as pd
 import joblib
 
 # -----------------------------
@@ -44,44 +45,57 @@ THRESHOLD = 0.5
 
 if st.button("🔍 Predict"):
 
-    input_data = np.array([[pregnancies, glucose, bp, skin, insulin, bmi, dpf, age]])
+    # Use DataFrame (fixes sklearn warning)
+    input_df = pd.DataFrame({
+        "Pregnancies": [pregnancies],
+        "Glucose": [glucose],
+        "BloodPressure": [bp],
+        "SkinThickness": [skin],
+        "Insulin": [insulin],
+        "BMI": [bmi],
+        "DiabetesPedigreeFunction": [dpf],
+        "Age": [age]
+    })
 
-    prob = pipeline.predict_proba(input_data)[0][1]
+    prob = pipeline.predict_proba(input_df)[0][1]
 
-    # Risk Levels
+    # -----------------------------
+    # Risk Levels (Improved Logic)
+    # -----------------------------
     if prob < 0.3:
         risk = "Low"
-        color = "green"
-    elif prob < 0.6:
-        risk = "Medium"
-        color = "orange"
+        st.success("✅ Low Risk - Maintain a healthy lifestyle")
+    elif prob < 0.7:
+        risk = "Moderate"
+        st.warning("⚠️ Moderate Risk - Monitor health, improve diet & exercise")
     else:
         risk = "High"
-        color = "red"
+        st.error("🚨 High Risk - Please consult a healthcare professional")
 
     # -----------------------------
     # Output Section
     # -----------------------------
     st.subheader("🧾 Prediction Result")
 
-    st.markdown(f"### Risk Level: :{color}[{risk}]")
-    st.markdown(f"### Probability of Diabetes: {prob*100:.2f}%")
+    st.markdown(f"### Risk Level: **{risk}**")
+    st.markdown(f"### Probability of Diabetes: **{prob*100:.2f}%**")
 
     # Progress Bar
     st.progress(float(prob))
 
     # -----------------------------
-    # Health Advice
+    # Input Summary (NEW 🔥)
     # -----------------------------
-    if risk == "High":
-        st.error("⚠️ High risk detected. Please consult a healthcare professional immediately.")
-    elif risk == "Medium":
-        st.warning("⚠️ Moderate risk. Consider improving diet, exercise, and regular monitoring.")
-    else:
-        st.success("✅ Low risk. Maintain a healthy lifestyle.")
+    st.markdown("### 📋 Your Input Summary")
+    st.dataframe(input_df)
+
+# -----------------------------
+# Disclaimer (VERY IMPORTANT)
+# -----------------------------
+st.markdown("---")
+st.info("⚠️ This is a machine learning prediction tool and not a medical diagnosis. Always consult a qualified healthcare professional.")
 
 # -----------------------------
 # Footer
 # -----------------------------
-st.markdown("---")
-st.caption("⚡ Built with Machine Learning (Logistic Regression + Threshold Tuning)")
+st.caption("⚡ Built with Machine Learning (Logistic Regression + Pipeline + Threshold Tuning)")
